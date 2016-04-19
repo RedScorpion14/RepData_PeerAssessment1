@@ -1,8 +1,11 @@
 ---
-title: 'Project 1: Activity Monitoring Data'
-author: "Fazleali Pirbhai"
-output: html_document
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
 ---
+
+
 
 Check if all packages required for this script has already been installed in the local computer. Otherwise, install any required packages.
 
@@ -23,29 +26,15 @@ Check if all packages required for this script has already been installed in the
     
 ```
 
+
+
+## Loading and preprocessing the data
+
+
 Set global variables for echo = True
 
 ```{r setoptions, echo=TRUE, results="hide"}
     opts_chunk$set(echo=TRUE)
-```
-
-
-Download Data if not in local computer
-
-``` {r downloadData, results="hide" }
-
-    if(!file.exists("Assignment")){
-          dir.create("Assignment")
-    }
-    
-    
-    if(!file.exists("repdata_data_activity.zip")){
-        file_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-        download.file(file_url, destfile = "repdata_data_activity.zip", mode = "wb")
-    }
-    
-    unzip("repdata_data_activity.zip", unzip = getOption("unzip"), exdir = getwd())
-
 ```
 
 1. Code for reading in the dataset and/or processing the data
@@ -56,9 +45,9 @@ Download Data if not in local computer
     activity$date <- as.Date(activity$date)
     activity <- tbl_df(activity)
 ```
-  
-  
-  
+
+## What is mean total number of steps taken per day?
+
 2.  Histogram of the total number of steps taken each day         
 
 
@@ -80,6 +69,11 @@ Download Data if not in local computer
   print(paste("Median number of steps taken per day: ", median(act_date$no_steps,na.rm = TRUE)),digits = 2)
 ```
 
+
+
+
+
+## What is the average daily activity pattern?
 4. Time series plot of the average number of steps taken
 
 ```{r Qtn4}
@@ -97,6 +91,10 @@ Download Data if not in local computer
   
   print(paste("Date with highest average number of steps: ",day_highest_mean))
 ```
+
+
+
+## Imputing missing values
 
 6. Code to describe and show a strategy for inputing missing data
 
@@ -131,6 +129,12 @@ Download Data if not in local computer
        main = paste("Total Number of Steps Taken per Day"), 
        xlab="Number of Steps in any particular day")
 ```
+
+
+
+
+
+## Are there differences in activity patterns between weekdays and weekends?
 
 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
 
