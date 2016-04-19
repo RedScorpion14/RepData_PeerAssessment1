@@ -1,25 +1,154 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: 'Project 1: Activity Monitoring Data'
+author: "Fazleali Pirbhai"
+output: html_document
 ---
 
+Check if all packages required for this script has already been installed in the local computer. Otherwise, install any required packages.
 
-## Loading and preprocessing the data
-
-
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
+```{r installpackages,results="hide"}
+    if(!require("lubridate"))
+        install.packages("lubridate")
+    
+    if(!require("dplyr"))
+        install.packages("dplyr")
 
 
+    if(!require("ggplot2"))
+        install.packages("ggplot2")
 
-## Imputing missing values
+    if(!require("knitr"))
+        install.packages("knitr")
+
+    
+```
+
+Set global variables for echo = True
+
+```{r setoptions, echo=TRUE, results="hide"}
+    opts_chunk$set(echo=TRUE)
+```
 
 
+Download Data if not in local computer
 
-## Are there differences in activity patterns between weekdays and weekends?
+``` {r downloadData, results="hide" }
+
+    if(!file.exists("Assignment")){
+          dir.create("Assignment")
+    }
+    
+    
+    if(!file.exists("repdata_data_activity.zip")){
+        file_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+        download.file(file_url, destfile = "repdata_data_activity.zip", mode = "wb")
+    }
+    
+    unzip("repdata_data_activity.zip", unzip = getOption("unzip"), exdir = getwd())
+
+```
+
+1. Code for reading in the dataset and/or processing the data
+
+```{r readingData, results='hide'}
+    
+    activity <-  read.csv("activity.csv", stringsAsFactors = FALSE)
+    activity$date <- as.Date(activity$date)
+    activity <- tbl_df(activity)
+```
+  
+  
+  
+2.  Histogram of the total number of steps taken each day         
+
+
+```{r Qtn2}
+  act_date <- activity%>%
+              group_by(date)%>%
+              summarise(no_steps = sum(steps,na.rm=TRUE), 
+                        mean_steps = mean(steps,na.rm=TRUE))
+    
+  hist(act_date$no_steps,
+       main = paste("Total Number of Steps Taken per Day"), 
+       xlab="Number of Steps in any particular day")
+```
+
+3.  Mean and median number of steps taken each day
+    
+```{r Qtn3}
+  print(paste("Mean number of steps taken per day: ", mean(act_date$no_steps,na.rm = TRUE)), digits = 2)
+  print(paste("Median number of steps taken per day: ", median(act_date$no_steps,na.rm = TRUE)),digits = 2)
+```
+
+4. Time series plot of the average number of steps taken
+
+```{r Qtn4}
+  
+    plot(act_date$date,act_date$mean_steps,type = "l", main = "Average Daily Activity Pattern",
+       xlab = "5-Minute Interval", ylab = "Average steps taken")
+```
+
+5. The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r Qtn5}
+  
+    
+  day_highest_mean <- as.matrix(act_date[act_date$mean_steps== max(act_date$mean_steps, na.rm = TRUE) & !is.na(act_date$mean_steps),"date"])
+  
+  print(paste("Date with highest average number of steps: ",day_highest_mean))
+```
+
+6. Code to describe and show a strategy for inputing missing data
+
+```{r missingData}  
+  no_NA <- sum(is.na(activity$steps))
+  print(paste("Total number of missing values in the dataset:",no_NA))
+  
+  # if steps is NA, then assign the mean of the date
+  
+  activity_new <- merge(activity,act_date, by="date")
+    
+  for(i in 1:nrow(activity_new)){
+      if(is.na(activity_new$steps[i])){
+          if(is.na(activity_new$mean_steps[i])){
+                activity_new$steps[i] <- 0
+          } else{
+                activity_new$steps[i] <- activity_new$mean_steps[i]
+          }
+      }
+  }
+  
+  activity_new1 <- activity_new %>%
+                  select(date, steps,no_steps, interval, mean_steps)%>%
+                  group_by(date)%>%
+                  summarise(no_steps = min(no_steps), no_steps_new = sum(steps) ,mean_steps = min(mean_steps), new_mean_steps = mean(steps), difference = new_mean_steps-mean_steps)
+```
+
+
+7. Histogram of the total number of steps taken each day after missing values are inputed                                     
+```{r Qtn 7}
+    hist(activity_new1$no_steps_new,
+       main = paste("Total Number of Steps Taken per Day"), 
+       xlab="Number of Steps in any particular day")
+```
+
+8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r Qtn8}
+    activity_wdays <- activity_new
+  
+  activity_wdays$wday <- "weekday"
+  
+  for(i in 1:nrow(activity_wdays)){
+        if(weekdays(activity_wdays$date[i],abbreviate = TRUE) %in% c("Sat","Sun")){
+          activity_wdays$wday[i] <- "weekend"          
+        }
+  }
+  
+  
+  activity_wdays <- aggregate(steps ~ interval + wday, data=activity_wdays, mean)
+  
+  ggplot(activity_wdays, aes(interval, steps)) + geom_line() + facet_grid(wday ~ .) +
+    xlab("5-minute interval") + ylab("Average number of steps")
+
+```  
